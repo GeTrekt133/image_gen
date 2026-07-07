@@ -63,6 +63,25 @@ dl_hf "Comfy-Org/flux2-dev" "split_files/text_encoders/mistral_3_small_flux2_fp8
 dl_hf "Comfy-Org/flux2-dev" "split_files/diffusion_models/flux2_dev_fp8mixed.safetensors"        "$M/diffusion_models" "flux2_dev_fp8mixed.safetensors"       "FLUX.2 diffusion fp8"
 hr | tee -a "$LOG"
 
+# 3) SDXL-realism bases (insta-influencer realism; deepest LoRA/ControlNet ecosystem)
+#    metadata call uses the Authorization header (API endpoint, fine); the DOWNLOAD uses ?token= (R2 gotcha).
+JUG_URL=$(curl -s -H "Authorization: Bearer $CIVITAI_TOKEN" "https://civitai.com/api/v1/models/133005" | jq -r '.modelVersions[0].files[0].downloadUrl')
+dl_civitai "$JUG_URL" "$M/checkpoints" "juggernautXL.safetensors" "Juggernaut XL (SDXL realism)"
+RV_URL=$(curl -s -H "Authorization: Bearer $CIVITAI_TOKEN" "https://civitai.com/api/v1/models/139562" | jq -r '.modelVersions[0].files[0].downloadUrl')
+dl_civitai "$RV_URL" "$M/checkpoints" "realvisxl_v5.safetensors" "RealVisXL V5 (SDXL realism)"
+hr | tee -a "$LOG"
+
+# 4) TODO (extend on the pod — resolve exact ComfyUI split-file paths via ComfyUI-Manager, then add dl_hf lines):
+#    Z-Image Turbo      -> see dl_zimage.sh (diffusion_models + text_encoders/qwen_3_4b + vae)  [WORKING]
+#    Qwen-Image/Edit    -> Comfy-Org Qwen-Image split files (diffusion + text_encoders/qwen_2.5_vl + vae)
+#    ControlNet (FLUX)  -> hf: Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0  -> controlnet/flux-union
+#    IP-Adapter         -> hf: h94/IP-Adapter (+ clip_vision)                     -> ipadapter/ , clip_vision/
+#    Face adapters      -> hf: InstantX/InstantID -> instantid/ ; PuLID-Flux weights -> pulid/
+#    Upscaler           -> 4x-UltraSharp / RealESRGAN                             -> upscale_models/
+#    Video (reels)      -> Wan 2.2 i2v (Comfy-Org/Wan_2.2_ComfyUI_Repackaged, fp8 + Lightning LoRA);
+#                          Wan2.2-S2V-14B (Wan-AI/Wan2.2-S2V-14B) talking avatar
+#    Verify each loads in ComfyUI /object_info before smoking it.
+
 echo "==== Phase 4 done $(date -u +%H:%M:%SZ) ====" | tee -a "$LOG"
 echo; echo "=== ИТОГ по скорости ==="; column -t -s'|' "$LOG" 2>/dev/null || cat "$LOG"
 rm -rf /workspace/hf_dl 2>/dev/null
