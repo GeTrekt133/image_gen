@@ -1,0 +1,12 @@
+{
+  "1": {"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"hidream_o1_image_dev_fp8_scaled.safetensors"}},
+  "2": {"class_type":"ModelNoiseScale","inputs":{"model":["1",0],"noise_scale":7.5}},
+  "4": {"class_type":"CLIPTextEncode","inputs":{"text":"a photorealistic portrait of an old lighthouse keeper, weathered face, stormy sea behind, dramatic light, detailed, 50mm","clip":["1",1]}},
+  "5": {"class_type":"CLIPTextEncode","inputs":{"text":"","clip":["1",1]}},
+  "6": {"class_type":"EmptyHiDreamO1LatentImage","inputs":{"width":1024,"height":1024,"batch_size":1}},
+  "7": {"class_type":"SamplerLCM","inputs":{"s_noise":1.0,"s_noise_end":1.0,"noise_clip_std":2.5}},
+  "8": {"class_type":"BasicScheduler","inputs":{"model":["2",0],"scheduler":"normal","steps":28,"denoise":1.0}},
+  "9": {"class_type":"SamplerCustom","inputs":{"model":["2",0],"add_noise":true,"noise_seed":88,"cfg":1.0,"positive":["4",0],"negative":["5",0],"sampler":["7",0],"sigmas":["8",0],"latent_image":["6",0]}},
+  "10": {"class_type":"VAEDecode","inputs":{"samples":["9",0],"vae":["1",2]}},
+  "11": {"class_type":"SaveImage","inputs":{"filename_prefix":"test_hidream_o1","images":["10",0]}}
+}

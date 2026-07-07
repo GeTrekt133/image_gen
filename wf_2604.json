@@ -1,0 +1,6 @@
+{
+  "1": {"class_type":"HiDreamO1ModelLoader","inputs":{"model_name":"HiDream-O1-Image-Dev-2604-FP8","precision":"auto","attention":"auto","download_if_missing":false}},
+  "2": {"class_type":"HiDreamO1Conditioning","inputs":{"prompt":"a photorealistic portrait of an old lighthouse keeper, weathered face, stormy sea behind, dramatic light, detailed skin, 50mm","negative_prompt":""}},
+  "3": {"class_type":"HiDreamO1Sampler","inputs":{"model":["1",0],"conditioning":["2",0],"model_type":"auto","width":1024,"height":1024,"steps":0,"seed":2604,"guidance_scale":5.0,"shift":-1.0,"noise_scale_start":7.5,"noise_scale_end":7.5,"noise_clip_std":2.5,"dev_editing_scheduler":"flow_match","layout_bboxes":"","preview_every":0,"keep_image1_aspect":false,"force_offload":true,"image":"0"}},
+  "4": {"class_type":"SaveImage","inputs":{"filename_prefix":"test_2604","images":["3",0]}}
+}

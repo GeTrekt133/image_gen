@@ -1,0 +1,16 @@
+# secrets — never commit
+secrets.env
+*.env
+!env.sh
+# models / weights / third-party
+ComfyUI/
+ai-toolkit/
+kohya_ss/
+hf/
+hf_dl/
+*.safetensors
+*.ckpt
+*.pt
+*.bin
+# logs
+*.log
