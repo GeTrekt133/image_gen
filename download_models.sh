@@ -5,7 +5,7 @@ set -uo pipefail
 source /workspace/env.sh
 M=/workspace/ComfyUI/models
 LOG=/workspace/dl_speed.log
-mkdir -p "$M"/{checkpoints,vae,diffusion_models,text_encoders,controlnet,instantid,pulid,ipadapter,clip_vision,upscale_models}
+mkdir -p "$M"/{checkpoints,vae,diffusion_models,text_encoders,controlnet,instantid,pulid,ipadapter,clip_vision,upscale_models,loras,model_patches}
 : > "$LOG"
 
 hr(){ printf '%s\n' "----------------------------------------------------------------"; }
@@ -71,16 +71,27 @@ RV_URL=$(curl -s -H "Authorization: Bearer $CIVITAI_TOKEN" "https://civitai.com/
 dl_civitai "$RV_URL" "$M/checkpoints" "realvisxl_v5.safetensors" "RealVisXL V5 (SDXL realism)"
 hr | tee -a "$LOG"
 
-# 4) TODO (extend on the pod — resolve exact ComfyUI split-file paths via ComfyUI-Manager, then add dl_hf lines):
-#    Z-Image Turbo      -> see dl_zimage.sh (diffusion_models + text_encoders/qwen_3_4b + vae)  [WORKING]
-#    Qwen-Image/Edit    -> Comfy-Org Qwen-Image split files (diffusion + text_encoders/qwen_2.5_vl + vae)
-#    ControlNet (FLUX)  -> hf: Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0  -> controlnet/flux-union
-#    IP-Adapter         -> hf: h94/IP-Adapter (+ clip_vision)                     -> ipadapter/ , clip_vision/
-#    Face adapters      -> hf: InstantX/InstantID -> instantid/ ; PuLID-Flux weights -> pulid/
-#    Upscaler           -> 4x-UltraSharp / RealESRGAN                             -> upscale_models/
-#    Video (reels)      -> Wan 2.2 i2v (Comfy-Org/Wan_2.2_ComfyUI_Repackaged, fp8 + Lightning LoRA);
-#                          Wan2.2-S2V-14B (Wan-AI/Wan2.2-S2V-14B) talking avatar
-#    Verify each loads in ComfyUI /object_info before smoking it.
+# 4) Qwen-Image base (t2i) + Qwen-Image-Edit  (verified split-file paths, docs.comfy.org)
+dl_hf "Comfy-Org/Qwen-Image_ComfyUI"      "split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors"  "$M/diffusion_models" "qwen_image_fp8_e4m3fn.safetensors"      "Qwen-Image diffusion fp8"
+dl_hf "Comfy-Org/Qwen-Image_ComfyUI"      "split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors" "$M/text_encoders"    "qwen_2.5_vl_7b_fp8_scaled.safetensors" "Qwen 2.5-VL text-enc"
+dl_hf "Comfy-Org/Qwen-Image_ComfyUI"      "split_files/vae/qwen_image_vae.safetensors"                      "$M/vae"              "qwen_image_vae.safetensors"            "Qwen-Image VAE"
+dl_hf "Comfy-Org/Qwen-Image-Edit_ComfyUI" "split_files/diffusion_models/qwen_image_edit_fp8_e4m3fn.safetensors" "$M/diffusion_models" "qwen_image_edit_fp8_e4m3fn.safetensors" "Qwen-Image-Edit diffusion fp8"
+dl_hf "lightx2v/Qwen-Image-Lightning"     "Qwen-Image-Lightning-4steps-V1.0.safetensors"                    "$M/loras"            "Qwen-Image-Lightning-4steps-V1.0.safetensors" "Qwen Lightning 4-step LoRA"
+hr | tee -a "$LOG"
+
+# 5) ControlNets per base (all Union, support pose via DWPose preprocessor, strength 0.8-1.0)
+# Qwen: native ControlNetLoader -> controlnet/  (3.54 GB)
+dl_hf "InstantX/Qwen-Image-ControlNet-Union" "diffusion_pytorch_model.safetensors" "$M/controlnet" "qwen_image_controlnet_union.safetensors" "Qwen ControlNet Union (InstantX)"
+# FLUX.2: needs custom node bryanmcguire/comfyui-flux2fun-controlnet; resolve the exact file name on the pod:
+#   hf download alibaba-pai/FLUX.2-dev-Fun-Controlnet-Union --local-dir "$M/controlnet/flux2-fun"
+# Z-Image: DIFFERENT — loads via ModelPatchLoader into model_patches/ (NOT controlnet/). Use 2.1:
+#   hf download alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.0 --local-dir "$M/model_patches/zimage-fun"
+hr | tee -a "$LOG"
+
+# 6) TODO consistency + video (add on pod after smoke): IP-Adapter (h94/IP-Adapter -> ipadapter/,clip_vision/);
+#    InstantID (InstantX/InstantID -> instantid/); PuLID-Flux -> pulid/; 4x-UltraSharp -> upscale_models/;
+#    Wan 2.2 i2v (Comfy-Org/Wan_2.2_ComfyUI_Repackaged + Lightning LoRA); Wan2.2-S2V-14B (Wan-AI/Wan2.2-S2V-14B).
+#    Verify each loads in ComfyUI /object_info before smoking.
 
 echo "==== Phase 4 done $(date -u +%H:%M:%SZ) ====" | tee -a "$LOG"
 echo; echo "=== ИТОГ по скорости ==="; column -t -s'|' "$LOG" 2>/dev/null || cat "$LOG"
