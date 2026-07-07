@@ -23,6 +23,26 @@ Secrets in env (sourced from `secrets.env` / `env.sh`): `HF_TOKEN`, `CIVITAI_TOK
 
 ---
 
+## Reference docs (read these first)
+- **`AI-influencer-stack-2026.md`** — model landscape (deep-research): which bases are on the peak
+  (Z-Image / FLUX.2 / Qwen / SDXL-realism), why consistency = **char-LoRA first**, video = Wan 2.2.
+  Use it to justify model choices in Phase 4 and the flow in Phase 7.
+- **`WORKFLOWS.md`** — pose-control + Qwen-Edit: the **exact trained ControlNet per base**
+  (Qwen `InstantX/Qwen-Image-ControlNet-Union` native; FLUX.2 + Z-Image `alibaba-pai/*-Fun-Controlnet-Union`)
+  with loader gotchas (⚠️ Z-Image uses `ModelPatchLoader` → `model_patches/`, not `controlnet/`), and which
+  official ComfyUI templates to reuse instead of hand-writing JSON.
+
+## Phase 0 — Bootstrap (clone repo + env)
+- `cd /workspace && git clone https://github.com/GeTrekt133/image_gen.git` — **this repo**. It carries
+  `download_models.sh`, `wf_*.json`, `smoke_submit.py`, `env.sh`, `provision.sh`, `startup.sh`, and the
+  two reference docs above.
+- Create `/workspace/secrets.env` (chmod 600) with `HF_TOKEN` + `CIVITAI_TOKEN` — **not committed**.
+- Make `env.sh` + the scripts reachable at `/workspace` (the scripts `source /workspace/env.sh`; copy or
+  symlink them up from the clone if it lands in `/workspace/image_gen`). Then `source /workspace/env.sh`
+  → activates venv `/venv/main`, sets `HF_HOME`, `HF_HUB_ENABLE_HF_TRANSFER=1`, `HF_XET_HIGH_PERFORMANCE=1`.
+
+---
+
 ## Phase 1 — System + env
 - `apt-get install -y git git-lfs aria2 ffmpeg tmux jq build-essential`; verify `nvidia-smi`, python, pip.
 - Ensure `/workspace/env.sh` exists and activates venv + exports HF vars + sources `secrets.env`.
@@ -46,7 +66,9 @@ Secrets in env (sourced from `secrets.env` / `env.sh`): `HF_TOKEN`, `CIVITAI_TOK
 - `kohya-ss/musubi-tuner` — Qwen / Wan 2.2 LoRA (optional, for later video-LoRA).
 
 ## Phase 4 — Models → `ComfyUI/models/<subfolder>`
-Use `download_models.sh` (extend it). Group by branch; place split files in the RIGHT subfolder
+Run `download_models.sh` (it already has verified paths for Z-Image/FLUX.2/SDXL + Qwen base/edit +
+ControlNets). Model rationale → `AI-influencer-stack-2026.md`; ControlNet files + gotchas → `WORKFLOWS.md`.
+Group by branch; place split files in the RIGHT subfolder
 (`diffusion_models/ text_encoders/ vae/ checkpoints/ loras/ controlnet/ ipadapter/ instantid/
 pulid/ clip_vision/ upscale_models/`). For repackaged models, prefer the **Comfy-Org** split-file
 repos and resolve exact filenames via ComfyUI-Manager's model DB — verify each loads in `/object_info`.
@@ -90,6 +112,8 @@ Per the research, char-LoRA — not adapters — is what makes a consistent pers
 ## Phase 7 — Real-flow test (the deliverable)
 Assemble the full consistency flow and produce a persona image set:
 `base + character-LoRA(0.7-0.9) + IP-Adapter(framing) + ControlNet(pose) + FaceDetailer + upscale`.
+**Pose-control per base (which ControlNet, loader gotchas, which official template to reuse) → `WORKFLOWS.md`.**
+Qwen-Image is the recommended pose base (native ControlNet + multi-reference).
 - Save the workflow as `wf_realflow.json` (API format).
 - Batch ~10 frames with `smoke_submit.py`/`generate.py`; confirm consistent identity + varied poses.
 
