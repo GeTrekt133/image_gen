@@ -154,3 +154,77 @@ sample count, video timings, the ComfyUI URL, and any model that still needs a m
   FLUX.1-dev & SD3.5 fading. Consistency = char-LoRA first, adapters second. Video = Wan 2.2 / S2V.
 - **Persistence**: no external store — models re-download on a fresh pod. Use Vast **Stop** to keep the
   disk; pull trained **LoRAs** off the pod (laptop / private HF repo) before **Destroy**.
+
+---
+
+# APPENDIX 2 — итоги пода RTX PRO 6000 Blackwell 96GB (2026-07-08)
+
+Фазы 0-5 + финиш-стек + pose/edit выполнены и выверены глазами (A/B на кропах 1:1).
+Char-LoRA (Phase 6), real-flow батч (Phase 7) и видео-ветка (Phase 8) — НЕ делались (фото-скоуп по решению).
+
+## Главные находки (стоили нам двух раундов дебага — НЕ повторять ошибки)
+
+1. **Qwen: только `qwen_image_2512_bf16`** («Max» в API), НЕ базовая `qwen_image_bf16` — базовая заметно
+   мягче. Рендер строго по официальному шаблону: `ModelSamplingAuraFlow shift 3.1` + **50 шагов cfg 4** +
+   **нативные 1328×1328** + анти-«пластик» негатив (`低分辨率…蜡像感…AI感` — см. `wf_qwen.json`). Официальный
+   «бустер детали» в позитив: *«…drawn with 32K pixel precision, unparalleled fine line drawing of every
+   single detail…»* — реально работает.
+2. **FLUX.2: fp8mixed «пластиковит» кожу.** Рабочая связка: **Q8_0 GGUF** (city96, ≈bf16 по виду) через
+   ноду `city96/ComfyUI-GGUF` (`UnetLoaderGGUF` → `models/unet/`) + **bf16 Mistral** текст-энкодер +
+   1328² + `Flux2Scheduler` 20-28 шагов / `FluxGuidance` 4.0 / `SamplerCustomAdvanced` (см. `wf_flux2_gguf.json`).
+3. **Z-Image — лидер «вида из ленты»** (дистилляция под человеческие предпочтения: контраст/свет/композиция),
+   но на 100%-кропах микродетали кожи у Qwen-2512/FLUX.2-Q8 БОЛЬШЕ (лапласиан 37/25 против 12.6).
+   Для ленты — Z-Image, для hero/зума — флагманы.
+4. **Порядок сэмплинга Z-Image:** 8 шагов / cfg 1 / `res_multistep` / `ModelSamplingAuraFlow shift 3`.
+   Негатив на cfg 1 игнорируется (шлём `ConditioningZeroOut`).
+
+## Патчи локального кода (теряются при recycle — накатить заново!)
+
+- **ComfyUI `comfy_api/latest/_input_impl/video_types.py`**: `frame.rotation` → `getattr(frame,'rotation',0) or 0`
+  (иначе ВЕСЬ LoadImage падает на PyAV без атрибута rotation).
+- **`custom_nodes/comfyui-flux2fun-controlnet/flux_patch.py`**: в начало `patched_forward_orig` добавлен
+  делегат в оригинальный `forward_orig` когда `flux2_fun_controlnets` пуст + `timestep_zero_index=None`/**kwargs
+  в сигнатуру (иначе нода глобально ЛОМАЕТ базовый FLUX.2: `unexpected keyword 'timestep_zero_index'`).
+
+## Новые воркфлоу (все — API-формат, готовы для smoke_submit.py)
+
+| Файл | Что делает | Время (RTX 6000) |
+|---|---|---|
+| `wf_zimage.json` | Z-Image t2i (bf16, 8 шагов) | ~4-6 c |
+| `wf_qwen.json` | Qwen-2512 t2i (bf16, 50 шагов, 1328², анти-пластик негатив) | ~50-70 c |
+| `wf_flux2_gguf.json` | FLUX.2 t2i (Q8 GGUF + bf16 Mistral, 28 шагов, 1328²) | ~55-80 c |
+| `wf_flux2.json` | FLUX.2 fp8 (легаси, «пластик» — не использовать для качества) | ~20 c |
+| `wf_sdxl_biglust/juggernaut/realvis.json` | SDXL-ветка (20 шагов) | ~5-8 c |
+| `wf_pose_zimage.json` | **Pose-control Z-Image**: DWPose → `ModelPatchLoader`(Fun-Union-2.1 → `model_patches/`!) → `QwenImageDiffsynthControlnet` strength 1.0 | ~4 c |
+| `wf_finish_zimage.json` | **Финиш «уровень D»**: FaceDetailer (face_yolov8m, denoise 0.45) → 4x-UltraSharp ×2 → img2img-рефайн (5 шагов, 0.33, dpmpp_2m_sde/beta) + Skin-LoRA | ~15-25 c |
+| `wf_qwen_edit.json` | **Qwen-Edit-2511**: стиль-перенос с референса (image1+image2) И замена одежды (один image1). `TextEncodeQwenImageEditPlus` + `FluxKontextMultiReferenceLatentMethod` + CFGNorm, 40 шагов cfg 3 | ~70-120 c |
+| `gen_matrix.py` / `smoke_all.py` | матрица 5 промптов × все базы / смоук с замером it/s + VRAM | — |
+
+## Финиш-пайплайн (принятый стандарт, «уровень D» из A/B/C/D-абляции)
+
+`Z-Image (4c) → FaceDetailer → 2K-рефайн → +Skin-LoRA (zimage_radiant_realism_v2 @ 0.8 в обе стадии) ≈ 20-24 c/кадр`
+Skin-LoRA: Civitai 2395852 «Radiant Realism Pro» v2 (Civitai-скачивание версии — только curl, aria2 403-ит на B2).
+FaceDetailer пока рисует «какое-то» лицо — якорь личности даст char-LoRA (Phase 6), она вставляется в те же ноды.
+
+## Что где лежит
+
+- Все выверенные картинки: `/workspace/gallery/{base,matrix,pose,style,edit,finish,abcd,crops}`
+- Самодостаточные HTML-визуализации (открываются локально): `/workspace/gallery/artifact/*.html`
+  (matrix_gallery, detail_check, pose_zimage, finish_pass, style_transfer, outfit_edit, abcd_finish)
+- Замеры: `/workspace/smoke_results.json`, `/workspace/matrix_results.json`
+
+## Диск 200 ГБ — НЕ вмещает всё сразу
+
+Сейчас на диске: Z-Image + Qwen-2512 + FLUX.2 Q8 + Edit-2511 + все CN/адаптеры/финиш. РАДИ ЭТОГО УДАЛЕНЫ
+(вернуть = `bash download_models.sh`, качается за минуты): Juggernaut XL, RealVisXL, Big Lust,
+FLUX.2-Fun ControlNet. При планировании нового пода: 300-400 ГБ диска решают проблему полностью.
+
+## Осталось по плану (следующий под / сессия)
+
+- **Phase 6 — char-LoRA** (ai-toolkit готов в `/workspace/ai-toolkit`; тренировать на `Tongyi-MAI/Z-Image`
+  базовой, инференс на Turbo; rank 16-32, ~1500-2500 шагов) — костяк идентичности.
+- **Phase 7 — real-flow** (`wf_realflow.json`): base + char-LoRA + pose (готов) + FaceDetailer + 2K (готовы).
+- Pose-сравнение Qwen native CN и FLUX.2 Fun CN (Z-Image pose уже выверен).
+- **Phase 8 — видео (Wan 2.2 i2v / S2V)** — отложено полностью.
+- Идеи прозапас: NAG-негативы для Z-Image, Tile-CN 2.1-8steps → 4K, distill-patch LoRA (честный CFG),
+  sageattention (не установлен), Z-Image-Omni (нода в ComfyUI есть, весов Tongyi ещё нет).

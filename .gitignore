@@ -14,3 +14,4 @@ hf_dl/
 *.bin
 # logs
 *.log
+__pycache__/

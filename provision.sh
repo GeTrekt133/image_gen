@@ -33,7 +33,11 @@ for url in \
   https://github.com/cubiq/ComfyUI_IPAdapter_plus \
   https://github.com/Fannovel16/comfyui_controlnet_aux \
   https://github.com/ltdrdata/ComfyUI-Impact-Pack \
-  https://github.com/ssitu/ComfyUI_UltimateSDUpscale ; do
+  https://github.com/ssitu/ComfyUI_UltimateSDUpscale \
+  https://github.com/bryanmcguire/comfyui-flux2fun-controlnet \
+  https://github.com/city96/ComfyUI-GGUF \
+  https://github.com/ltdrdata/ComfyUI-Impact-Subpack \
+  https://github.com/kijai/ComfyUI-WanVideoWrapper ; do
   d=$(basename "$url"); [ -d "$d/.git" ] || git clone --depth 1 --recurse-submodules "$url" "$d"
   [ -f "$d/requirements.txt" ] && pip install -q -r "$d/requirements.txt" --root-user-action=ignore
 done
@@ -42,7 +46,9 @@ echo "===== Phase 3: trainers ====="
 cd /workspace
 [ -d ai-toolkit/.git ] || git clone --depth 1 --recurse-submodules https://github.com/ostris/ai-toolkit.git
 [ -d kohya_ss/.git ]  || git clone --depth 1 --recurse-submodules https://github.com/bmaltais/kohya_ss.git
+[ -d musubi-tuner/.git ] || git clone --depth 1 --recurse-submodules https://github.com/kohya-ss/musubi-tuner.git
 pip install -q -r ai-toolkit/requirements.txt --root-user-action=ignore || true
+[ -f musubi-tuner/pyproject.toml ] && pip install -q -e musubi-tuner --root-user-action=ignore || true
 
 # Разрешение numpy-конфликта: ComfyUI/opencv хотят numpy>=2, ai-toolkit тянет scipy 1.12 (numpy<2).
 # Фиксируем связку, рабочую для ComfyUI: numpy 2.4.6 + scipy>=1.13.
