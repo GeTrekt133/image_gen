@@ -58,3 +58,9 @@
 - Полный вертикальный клип: длинный driving (Sway Dance 31с) + NSFW-персона + spatial-upscale до 1080p.
 - NSFW-danse: та же схема, промпт/персона из unStable-пайплайна (см. PIPELINE_NSFW.md).
 - char-LoRA остаётся главным незакрытым пунктом для консистентности лица в видео.
+
+## Липсинк (LipDub IC-LoRA) — итоги 2026-07-08
+- **LipDub = редаб**: родной домен — видео УЖЕ говорящего человека (+аудио в дорожке файла). На статичном портрете артикуляция слабая, на говорящем видео — полная.
+- **Аудио пересинтезируется** (`LTXVSetAudioRefTokens` = speaker-identity ref-токены, негативные RoPE-позиции; stage1 = EmptyLatentAudio). Точный трек: frozen-латент (slot 2 SetAudioRefTokens) в stage1-concat — но губы тогда слабее.
+- **Рабочий рецепт говорящей персоны**: фронтальный i2v-реф + спич вмуксован в реф → official-разводка → в пост-обработке заменить дорожку реальным аудио (`lipsync_FINAL_persona.mp4`). Идеальный audio-driven talking head = Wan S2V (отдельный стек).
+- Файлы: `wf_lipdub.json` (+nolora), `ui2api.py` (UI→API конвертер со всеми фиксами: dotted-keys V3, сдвиг виджетов, downscale-линк).
