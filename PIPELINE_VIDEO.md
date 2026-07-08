@@ -64,3 +64,6 @@
 - **Аудио пересинтезируется** (`LTXVSetAudioRefTokens` = speaker-identity ref-токены, негативные RoPE-позиции; stage1 = EmptyLatentAudio). Точный трек: frozen-латент (slot 2 SetAudioRefTokens) в stage1-concat — но губы тогда слабее.
 - **Рабочий рецепт говорящей персоны**: фронтальный i2v-реф + спич вмуксован в реф → official-разводка → в пост-обработке заменить дорожку реальным аудио (`lipsync_FINAL_persona.mp4`). Идеальный audio-driven talking head = Wan S2V (отдельный стек).
 - Файлы: `wf_lipdub.json` (+nolora), `ui2api.py` (UI→API конвертер со всеми фиксами: dotted-keys V3, сдвиг виджетов, downscale-линк).
+
+## Reel-конвейер (multi-shot)
+См. `reel_shots_pipeline.md` — TransNetV2 shots → driving-нарезка → per-shot motion-control (единый сид) → concat. Скрипт `run_reel.py`.
