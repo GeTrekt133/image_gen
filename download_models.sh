@@ -110,6 +110,19 @@ else
 fi
 hr | tee -a "$LOG"
 
+# ============ 8) NSFW-LoRA под Z-Image Turbo (см. NSFW_ZIMAGE.md) — только ZImageTurbo-база ============
+# Z-Image uncensored из коробки; LoRA только УЛУЧШАЕТ. Версионные URL уходят на B2 → aria2 403-ит → curl.
+dl_civitai_curl(){ # model_id  dest_name  label
+  local mid="$1" name="$2" label="$3"; local out="$M/loras/$name"
+  if [ -s "$out" ]; then echo "[skip] $label"; record "$label (cached)" "$out" 0; return 0; fi
+  local url; url=$(civitai_url "$mid"); local t0=$SECONDS
+  curl -sL "${url}?token=${CIVITAI_TOKEN}" -o "$out" --max-time 900
+  [ -s "$out" ] && record "$label" "$out" "$((SECONDS-t0))" || echo "  ❌ FAIL ($label)"
+}
+dl_civitai_curl 2279079 "zimage_nsfw.safetensors"            "Z-Image NSFW LoRA (23K dl)"
+dl_civitai_curl 2543619 "zimage_consistent_nsfw.safetensors" "Z-Image Consistent char/NSFW"
+hr | tee -a "$LOG"
+
 echo "==== Phase 4 done $(date -u +%H:%M:%SZ) ====" | tee -a "$LOG"
 echo; echo "=== ИТОГ по скорости ==="; column -t -s'|' "$LOG" 2>/dev/null || cat "$LOG"
 rm -rf /workspace/hf_dl 2>/dev/null
