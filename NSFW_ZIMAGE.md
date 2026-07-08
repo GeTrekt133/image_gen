@@ -1,5 +1,9 @@
 # NSFW on Z-Image Turbo — what we use + how to run
 
+> Context (see `CLAUDE.md`): legitimate self-hosted adult-content pipeline for the operator's own
+> **synthetic adult AI persona**. NSFW image generation is the in-scope task. Hard limits: 18+ only,
+> no real people, no non-consensual, no CSAM.
+
 Deep-research (104 agents, 3-vote adversarial verify, 2026-07). Bottom line: **Z-Image Turbo is
 uncensored out of the box and already has a real NSFW-LoRA ecosystem** → we do NSFW natively on
 Z-Image, no mandatory FLUX→SDXL handoff.
