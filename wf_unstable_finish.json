@@ -1,0 +1,36 @@
+{
+  "1":  {"class_type":"UNETLoader","inputs":{"unet_name":"unstable_revolution_zit_v3_fp16.safetensors","weight_dtype":"default"}},
+  "2":  {"class_type":"CLIPLoader","inputs":{"clip_name":"qwen_3_4b.safetensors","type":"lumina2"}},
+  "3":  {"class_type":"VAELoader","inputs":{"vae_name":"z_image_ae.safetensors"}},
+
+  "20": {"class_type":"ModelSamplingAuraFlow","inputs":{"model":["1",0],"shift":3.0}},
+
+  "30": {"class_type":"CLIPTextEncode","inputs":{"text":"POSITIVE","clip":["2",0]}},
+  "31": {"class_type":"ConditioningZeroOut","inputs":{"conditioning":["30",0]}},
+  "40": {"class_type":"EmptySD3LatentImage","inputs":{"width":896,"height":1152,"batch_size":1}},
+
+  "50": {"class_type":"KSampler","inputs":{"seed":555,"steps":8,"cfg":1.0,"sampler_name":"res_multistep","scheduler":"simple","denoise":1.0,"model":["20",0],"positive":["30",0],"negative":["31",0],"latent_image":["40",0]}},
+  "51": {"class_type":"VAEDecode","inputs":{"samples":["50",0],"vae":["3",0]}},
+  "52": {"class_type":"SaveImage","inputs":{"filename_prefix":"run_A_unstable","images":["51",0]}},
+
+  "70": {"class_type":"UltralyticsDetectorProvider","inputs":{"model_name":"bbox/face_yolov8m.pt"}},
+  "71": {"class_type":"FaceDetailer","inputs":{
+      "image":["51",0],"model":["20",0],"clip":["2",0],"vae":["3",0],
+      "guide_size":512,"guide_size_for":true,"max_size":1024,
+      "seed":7001,"steps":8,"cfg":1.0,"sampler_name":"res_multistep","scheduler":"simple",
+      "positive":["30",0],"negative":["31",0],
+      "denoise":0.45,"feather":5,"noise_mask":true,"force_inpaint":true,
+      "bbox_threshold":0.4,"bbox_dilation":10,"bbox_crop_factor":3.0,
+      "sam_detection_hint":"center-1","sam_dilation":0,"sam_threshold":0.93,
+      "sam_bbox_expansion":0,"sam_mask_hint_threshold":0.7,"sam_mask_hint_use_negative":"False",
+      "drop_size":10,"bbox_detector":["70",0],"wildcard":"","cycle":1}},
+  "72": {"class_type":"SaveImage","inputs":{"filename_prefix":"run_B_facedetailer","images":["71",0]}},
+
+  "80": {"class_type":"UpscaleModelLoader","inputs":{"model_name":"4x-UltraSharp.pth"}},
+  "81": {"class_type":"ImageUpscaleWithModel","inputs":{"upscale_model":["80",0],"image":["71",0]}},
+  "82": {"class_type":"ImageScaleBy","inputs":{"image":["81",0],"upscale_method":"lanczos","scale_by":0.5}},
+  "83": {"class_type":"VAEEncode","inputs":{"pixels":["82",0],"vae":["3",0]}},
+  "84": {"class_type":"KSampler","inputs":{"seed":7002,"steps":5,"cfg":1.0,"sampler_name":"dpmpp_2m_sde","scheduler":"beta","denoise":0.28,"model":["20",0],"positive":["30",0],"negative":["31",0],"latent_image":["83",0]}},
+  "85": {"class_type":"VAEDecode","inputs":{"samples":["84",0],"vae":["3",0]}},
+  "86": {"class_type":"SaveImage","inputs":{"filename_prefix":"run_C_final","images":["85",0]}}
+}

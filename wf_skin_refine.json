@@ -1,0 +1,13 @@
+{
+  "1":  {"class_type":"UNETLoader","inputs":{"unet_name":"unstable_revolution_zit_v3_fp16.safetensors","weight_dtype":"default"}},
+  "2":  {"class_type":"CLIPLoader","inputs":{"clip_name":"qwen_3_4b.safetensors","type":"lumina2"}},
+  "3":  {"class_type":"VAELoader","inputs":{"vae_name":"z_image_ae.safetensors"}},
+  "20": {"class_type":"ModelSamplingAuraFlow","inputs":{"model":["1",0],"shift":3.0}},
+  "5":  {"class_type":"LoadImage","inputs":{"image":"skin_src.png"}},
+  "30": {"class_type":"CLIPTextEncode","inputs":{"text":"photorealistic, natural bare skin with realistic pores and fine texture, subtle imperfections, highly detailed, sharp focus","clip":["2",0]}},
+  "31": {"class_type":"ConditioningZeroOut","inputs":{"conditioning":["30",0]}},
+  "33": {"class_type":"VAEEncode","inputs":{"pixels":["5",0],"vae":["3",0]}},
+  "34": {"class_type":"KSampler","inputs":{"seed":900,"steps":10,"cfg":1.0,"sampler_name":"res_multistep","scheduler":"simple","denoise":0.25,"model":["20",0],"positive":["30",0],"negative":["31",0],"latent_image":["33",0]}},
+  "35": {"class_type":"VAEDecode","inputs":{"samples":["34",0],"vae":["3",0]}},
+  "36": {"class_type":"SaveImage","inputs":{"filename_prefix":"skin_refine","images":["35",0]}}
+}

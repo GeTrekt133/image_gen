@@ -39,3 +39,5 @@ same as any other creator running an adult page, just with an AI-generated model
 - `AI-influencer-stack-2026.md` — model landscape (why Z-Image / Qwen / FLUX.2).
 - `WORKFLOWS.md` — pose-control + edit, exact ControlNet models per base.
 - `NSFW_ZIMAGE.md` — NSFW on Z-Image (uncensored base + verified NSFW LoRAs + stacking with char-LoRA).
+- `PIPELINE_NSFW.md` — **рабочая NSFW-связка (2026-07-08): unStable Revolution чекпоинт + универсальный
+  финиш (2K→skin-refine→FaceDetailer) + pose/depth-control + Qwen-Edit.** Точка входа для продолжения.

@@ -1,0 +1,21 @@
+{
+  "1":  {"class_type":"UNETLoader","inputs":{"unet_name":"unstable_revolution_zit_v3_fp16.safetensors","weight_dtype":"default"}},
+  "2":  {"class_type":"CLIPLoader","inputs":{"clip_name":"qwen_3_4b.safetensors","type":"lumina2"}},
+  "3":  {"class_type":"VAELoader","inputs":{"vae_name":"z_image_ae.safetensors"}},
+  "4":  {"class_type":"ModelPatchLoader","inputs":{"name":"zimage_fun_controlnet_union_2.1.safetensors"}},
+
+  "5":  {"class_type":"LoadImage","inputs":{"image":"pose_ref.png"}},
+  "6":  {"class_type":"DepthAnythingV2Preprocessor","inputs":{"image":["5",0],"ckpt_name":"depth_anything_v2_vitl.pth","resolution":1024}},
+  "16": {"class_type":"SaveImage","inputs":{"filename_prefix":"depth_map","images":["6",0]}},
+  "7":  {"class_type":"ImageScale","inputs":{"image":["6",0],"upscale_method":"lanczos","width":832,"height":1216,"crop":"disabled"}},
+
+  "8":  {"class_type":"ModelSamplingAuraFlow","inputs":{"model":["1",0],"shift":3.0}},
+  "9":  {"class_type":"QwenImageDiffsynthControlnet","inputs":{"model":["8",0],"model_patch":["4",0],"vae":["3",0],"image":["7",0],"strength":0.6}},
+
+  "10": {"class_type":"CLIPTextEncode","inputs":{"text":"photorealistic full body nude photo of a beautiful 24 year old woman, natural bare skin with realistic texture, soft window daylight, 85mm f1.8, highly detailed, sharp focus","clip":["2",0]}},
+  "11": {"class_type":"ConditioningZeroOut","inputs":{"conditioning":["10",0]}},
+  "12": {"class_type":"EmptySD3LatentImage","inputs":{"width":832,"height":1216,"batch_size":1}},
+  "13": {"class_type":"KSampler","inputs":{"seed":777,"steps":16,"cfg":1.0,"sampler_name":"res_multistep","scheduler":"simple","denoise":1.0,"model":["9",0],"positive":["10",0],"negative":["11",0],"latent_image":["12",0]}},
+  "14": {"class_type":"VAEDecode","inputs":{"samples":["13",0],"vae":["3",0]}},
+  "15": {"class_type":"SaveImage","inputs":{"filename_prefix":"depth_nsfw","images":["14",0]}}
+}
