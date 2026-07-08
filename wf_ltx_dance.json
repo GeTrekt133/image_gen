@@ -39,7 +39,10 @@
     "5028",
     0
    ],
-   "latent_downscale_factor": 1.0,
+   "latent_downscale_factor": [
+    "5011",
+    1
+   ],
    "frame_idx": 0,
    "strength": 0.75,
    "crop": "disabled",
