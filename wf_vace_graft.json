@@ -1,0 +1,454 @@
+{
+ "7002": {
+  "class_type": "LoadVideo",
+  "inputs": {
+   "file": "drive_mask.mp4"
+  }
+ },
+ "5023": {
+  "class_type": "LTXAVTextEncoderLoader",
+  "inputs": {
+   "text_encoder": "gemma_3_12B_it_clean_fp8.safetensors",
+   "ckpt_name": "ltx-2.3-22b-dev-fp8.safetensors",
+   "device": "default"
+  }
+ },
+ "3940": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "ltx-2.3-22b-dev-fp8.safetensors"
+  }
+ },
+ "3980": {
+  "class_type": "LTXVEmptyLatentAudio",
+  "inputs": {
+   "frames_number": [
+    "5029",
+    2
+   ],
+   "frame_rate": [
+    "5066",
+    0
+   ],
+   "batch_size": 1,
+   "audio_vae": [
+    "4010",
+    0
+   ]
+  }
+ },
+ "1241": {
+  "class_type": "LTXVConditioning",
+  "inputs": {
+   "positive": [
+    "2483",
+    0
+   ],
+   "negative": [
+    "2612",
+    0
+   ],
+   "frame_rate": [
+    "5000",
+    2
+   ]
+  }
+ },
+ "4922": {
+  "class_type": "LoraLoaderModelOnly",
+  "inputs": {
+   "model": [
+    "3940",
+    0
+   ],
+   "lora_name": "ltxv/ltx2/ltx-2.3-22b-distilled-lora-384-1.1.safetensors",
+   "strength_model": 0.9
+  }
+ },
+ "4010": {
+  "class_type": "LTXVAudioVAELoader",
+  "inputs": {
+   "ckpt_name": "ltx-2.3-22b-dev-fp8.safetensors"
+  }
+ },
+ "5066": {
+  "class_type": "LTXFloatToInt",
+  "inputs": {
+   "a": [
+    "5000",
+    2
+   ]
+  }
+ },
+ "5013": {
+  "class_type": "LTXVCropGuides",
+  "inputs": {
+   "positive": [
+    "5012",
+    0
+   ],
+   "negative": [
+    "5012",
+    1
+   ],
+   "latent": [
+    "4845",
+    0
+   ]
+  }
+ },
+ "7008": {
+  "class_type": "LTXVSetVideoLatentNoiseMasks",
+  "inputs": {
+   "samples": [
+    "7010",
+    0
+   ],
+   "masks": [
+    "7007",
+    0
+   ]
+  }
+ },
+ "5012": {
+  "class_type": "LTXAddVideoICLoRAGuide",
+  "inputs": {
+   "positive": [
+    "1241",
+    0
+   ],
+   "negative": [
+    "1241",
+    1
+   ],
+   "vae": [
+    "3940",
+    2
+   ],
+   "latent": [
+    "7008",
+    0
+   ],
+   "image": [
+    "5028",
+    0
+   ],
+   "latent_downscale_factor": [
+    "5011",
+    1
+   ],
+   "frame_idx": 0,
+   "strength": 0.75,
+   "crop": "disabled",
+   "use_tiled_encode": false,
+   "tile_size": 256,
+   "tile_overlap": 64
+  }
+ },
+ "7005": {
+  "class_type": "LTXVDilateVideoMask",
+  "inputs": {
+   "mask": [
+    "7004",
+    0
+   ],
+   "spatial_radius": 16,
+   "temporal_radius": 1
+  }
+ },
+ "5001": {
+  "class_type": "LoadVideo",
+  "inputs": {
+   "file": "drive_dzp.mp4"
+  }
+ },
+ "4831": {
+  "class_type": "KSamplerSelect",
+  "inputs": {
+   "sampler_name": "euler_ancestral"
+  }
+ },
+ "7004": {
+  "class_type": "ImageToMask",
+  "inputs": {
+   "image": [
+    "7003",
+    0
+   ],
+   "channel": "red"
+  }
+ },
+ "4828": {
+  "class_type": "CFGGuider",
+  "inputs": {
+   "model": [
+    "5011",
+    0
+   ],
+   "positive": [
+    "5012",
+    0
+   ],
+   "negative": [
+    "5012",
+    1
+   ],
+   "cfg": 1
+  }
+ },
+ "4832": {
+  "class_type": "RandomNoise",
+  "inputs": {
+   "noise_seed": 42
+  }
+ },
+ "5000": {
+  "class_type": "GetVideoComponents",
+  "inputs": {
+   "video": [
+    "5001",
+    0
+   ]
+  }
+ },
+ "5025": {
+  "class_type": "ManualSigmas",
+  "inputs": {
+   "sigmas": "1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"
+  }
+ },
+ "4845": {
+  "class_type": "LTXVSeparateAVLatent",
+  "inputs": {
+   "av_latent": [
+    "4829",
+    0
+   ]
+  }
+ },
+ "4849": {
+  "class_type": "CreateVideo",
+  "inputs": {
+   "images": [
+    "5065",
+    0
+   ],
+   "fps": [
+    "5000",
+    2
+   ],
+   "audio": [
+    "4848",
+    0
+   ]
+  }
+ },
+ "4829": {
+  "class_type": "SamplerCustomAdvanced",
+  "inputs": {
+   "noise": [
+    "4832",
+    0
+   ],
+   "guider": [
+    "4828",
+    0
+   ],
+   "sampler": [
+    "4831",
+    0
+   ],
+   "sigmas": [
+    "5025",
+    0
+   ],
+   "latent_image": [
+    "4528",
+    0
+   ]
+  }
+ },
+ "5029": {
+  "class_type": "GetImageSize",
+  "inputs": {
+   "image": [
+    "5028",
+    0
+   ]
+  }
+ },
+ "4528": {
+  "class_type": "LTXVConcatAVLatent",
+  "inputs": {
+   "video_latent": [
+    "5012",
+    2
+   ],
+   "audio_latent": [
+    "3980",
+    0
+   ]
+  }
+ },
+ "5065": {
+  "class_type": "LTXVTiledVAEDecode",
+  "inputs": {
+   "vae": [
+    "3940",
+    2
+   ],
+   "latents": [
+    "5013",
+    2
+   ],
+   "horizontal_tiles": 1,
+   "vertical_tiles": 1,
+   "overlap": 6,
+   "last_frame_fix": false,
+   "working_device": "auto",
+   "working_dtype": "auto"
+  }
+ },
+ "4991": {
+  "class_type": "DWPreprocessor",
+  "inputs": {
+   "image": [
+    "5026",
+    0
+   ],
+   "detect_hand": "enable",
+   "detect_body": "enable",
+   "detect_face": "enable",
+   "resolution": 512,
+   "bbox_detector": "yolox_l.torchscript.pt",
+   "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
+   "scale_stick_for_xinsr_cn": "disable"
+  }
+ },
+ "2483": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "a beautiful young woman with wavy brown hair in a blue and white striped shirt dress, dancing, pink and purple ambient room light, photorealistic, highly detailed",
+   "clip": [
+    "5023",
+    0
+   ]
+  }
+ },
+ "2612": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "cartoon, anime, cgi, plastic skin, deformed, ugly, low quality, blurry, watermark, text",
+   "clip": [
+    "5023",
+    0
+   ]
+  }
+ },
+ "5026": {
+  "class_type": "ResizeImageMaskNode",
+  "inputs": {
+   "input": [
+    "5000",
+    0
+   ],
+   "resize_type": "scale shorter dimension",
+   "resize_type.shorter_size": 544,
+   "scale_method": "lanczos"
+  }
+ },
+ "4848": {
+  "class_type": "LTXVAudioVAEDecode",
+  "inputs": {
+   "samples": [
+    "4845",
+    1
+   ],
+   "audio_vae": [
+    "4010",
+    0
+   ]
+  }
+ },
+ "4852": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "video": [
+    "4849",
+    0
+   ],
+   "filename_prefix": "vace_test",
+   "format": "mp4",
+   "codec": "h264"
+  }
+ },
+ "5028": {
+  "class_type": "ResizeImageMaskNode",
+  "inputs": {
+   "input": [
+    "4991",
+    0
+   ],
+   "resize_type": "scale to multiple",
+   "resize_type.multiple": 32,
+   "scale_method": "lanczos"
+  }
+ },
+ "7007": {
+  "class_type": "LTXVPreprocessMasks",
+  "inputs": {
+   "masks": [
+    "7005",
+    0
+   ],
+   "vae": [
+    "3940",
+    2
+   ],
+   "invert_input_masks": false,
+   "ignore_first_mask": false,
+   "pooling_method": "max",
+   "grow_mask": 8,
+   "tapered_corners": true,
+   "clamp_min": 0.0,
+   "clamp_max": 1.0
+  }
+ },
+ "7010": {
+  "class_type": "VAEEncodeTiled",
+  "inputs": {
+   "pixels": [
+    "5000",
+    0
+   ],
+   "vae": [
+    "3940",
+    2
+   ],
+   "tile_size": 512,
+   "overlap": 64,
+   "temporal_size": 64,
+   "temporal_overlap": 8
+  }
+ },
+ "5011": {
+  "class_type": "LTXICLoRALoaderModelOnly",
+  "inputs": {
+   "model": [
+    "4922",
+    0
+   ],
+   "lora_name": "ltxv/ltx2/ltx-2.3-22b-ic-lora-union-control-ref0.5.safetensors",
+   "strength_model": 1.0
+  }
+ },
+ "7003": {
+  "class_type": "GetVideoComponents",
+  "inputs": {
+   "video": [
+    "7002",
+    0
+   ]
+  }
+ }
+}
