@@ -180,11 +180,12 @@ LR: low (refinement risk of forgetting base video priors). PiSSA init + rsLoRA s
 - **DPO fixes hands (Claim 7)** — **D3PO** (arXiv 2311.13231, CVPR 2024, code available) reduces hand
   deformity + "correct number of fingers" **without a reward model**; DenseDPO fixes video-DPO low-motion bias.
 
-**🔴 CRITICAL — we missed:** IC-LoRA control INFERENCE runs **only on the distilled 22b checkpoint**
-(`ltx-2.3-22b-distilled.safetensors`), NOT dev — official: *"Do not use it with the dev checkpoint"*
-(ltx.io/blog/using-lora-adapters, `ic_lora.py`). Our pipeline is on **`dev-fp8`**; in ComfyUI dev+union runs,
-but the *official* control path is distilled → the distilled (lower-detail) model is what hurts hands on
-controlled generation. **Verify dev+union isn't degraded; the sanctioned control path is distilled.**
+**Control = distilled path (confirmed OK for us):** IC-LoRA control INFERENCE is the **distilled** path only
+(`ltx-2.3-22b-distilled`), NOT dev — official: *"Do not use it with the dev checkpoint"* (ltx.io/blog/using-lora-adapters,
+`ic_lora.py`). We run it in ComfyUI as **dev-fp8 base + distilled-LoRA (0.5) + 8-step** = the distilled sampling
+path, so control works as intended (operator confirmed). ⚠️ Implication for HANDS: distilled = the *sanctioned
+control path* AND the *low-fidelity regime* (8-step loses fine detail) → hand gains come from the **non-distilled /
+more-steps** path on hero frames ("Pro stage-1: distill 0, 30 steps"), base-FT, and repair — NOT from the control path.
 
 **Corrections:**
 - **Full-FT 22B = 4-8× H100 + FSDP**, NOT one 96GB → **GaLore-full-FT-on-one-card is OFF**; 96GB = PEFT/LoRA
