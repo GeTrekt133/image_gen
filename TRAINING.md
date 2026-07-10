@@ -169,6 +169,42 @@ LR: low (refinement risk of forgetting base video priors). PiSSA init + rsLoRA s
 4. Build **MVP data ~600** → first warm-start pose LoRA + base LoKr → **eval on hand metric** → scale.
 5. Later: **DPO/reward pass** on finger-count win/lose pairs (strongest anatomy lever, semi-automatable).
 
+## ✅ Verification (deep-research, 2026-07-10, primary sources)
+
+**CONFIRMED by Lightricks docs / arXiv:**
+- **Infra (Claim 1)** — ltx-trainer LoRA/full/IC-LoRA + all cited keys. Concrete **defaults**: `rank 32`,
+  `alpha 32`, `learning_rate 1e-4`, adamw/adamw8bit, targets `to_k/to_q/to_v/to_out.0`. IC-LoRA pairs:
+  reference latents concatenated, **clean (timestep=0), no noise, excluded from loss**. `load_checkpoint` exists.
+- **Control landscape (Claim 2)** — no 22b pose-only; only Union (Canny+Depth+Pose, ref0.5, ~654MB);
+  dedicated pose only on 19b; 22b also has **Motion-Track-Control**.
+- **DPO fixes hands (Claim 7)** — **D3PO** (arXiv 2311.13231, CVPR 2024, code available) reduces hand
+  deformity + "correct number of fingers" **without a reward model**; DenseDPO fixes video-DPO low-motion bias.
+
+**🔴 CRITICAL — we missed:** IC-LoRA control INFERENCE runs **only on the distilled 22b checkpoint**
+(`ltx-2.3-22b-distilled.safetensors`), NOT dev — official: *"Do not use it with the dev checkpoint"*
+(ltx.io/blog/using-lora-adapters, `ic_lora.py`). Our pipeline is on **`dev-fp8`**; in ComfyUI dev+union runs,
+but the *official* control path is distilled → the distilled (lower-detail) model is what hurts hands on
+controlled generation. **Verify dev+union isn't degraded; the sanctioned control path is distilled.**
+
+**Corrections:**
+- **Full-FT 22B = 4-8× H100 + FSDP**, NOT one 96GB → **GaLore-full-FT-on-one-card is OFF**; 96GB = PEFT/LoRA
+  family only (32GB min / 80GB rec). Confirms LoKr/LoRA is the path.
+- **Rank NOT hard-capped at 128** — 8-128 is a "typical range", default 32; higher is allowed (not enforced).
+- **6-finger ≠ specifically caused by distillation** — that causal claim was REFUTED (bad source). It's
+  base-generation + resolution + fast-motion (distilled control path likely contributes, not proven as THE cause).
+
+**🆕 New lever — HandCraft** (WACV 2025, arXiv 2411.04332): training-free post-hoc hand restoration —
+YOLOv8 hand-detect → auto-mask → **MANO 3D-hand depth-conditioning → ControlNet inpaint**. Better than naive
+Qwen-Edit (MANO = correct 3D-hand prior). Lineage: HandRefiner'23 → HandCraft'24 → 3D-mesh-guided (2506.12680)'25.
+**IMAGE method → per-frame on video = temporal-flicker risk**; complements, doesn't replace base-FT.
+
+**🟡 STILL UNVERIFIED (our reasoning — treat as hypotheses to test on pod):**
+- Warm-start (Variant A) low-LR specialization of union without forgetting (`load_checkpoint` exists; external-
+  adapter-init + no-forgetting unconfirmed).
+- "Motion-blur = good data" + data amounts (500-1500 / 1000-3000) — plausible, no source.
+- 🔴 **LoKr/LyCORIS for LTX-2.3 (ai-toolkit) — STILL OPEN** (unconfirmed). PiSSA/rsLoRA for LTX unconfirmed.
+- No community LTX-2.3 dance/hand LoRA or published hyperparams found (beyond the defaults above).
+
 ## Sources
 - LTX Trainer docs: `configuration-reference.md`, `training-guide.md`, `dataset-preparation.md`, `training-modes.md`
   (github.com/Lightricks/LTX-2, packages/ltx-trainer).
