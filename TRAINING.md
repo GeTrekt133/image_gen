@@ -151,6 +151,26 @@ LR: low (refinement risk of forgetting base video priors). PiSSA init + rsLoRA s
 
 ---
 
+## Conditioning augmentation (mixed-cond, per-sample) — cheap regularization
+Same clip, **varied conditioning signal** → more (condition→target) pairs from the same footage.
+This is how base Wan/LTX get multi-mode ability; training the adapter the same way keeps it inside the
+base's conditioning distribution (less shift). Operator idea, refined:
+- **Per-SAMPLE random mode, NOT per-epoch blocks.** Whole-epoch mode switches make a low-rank LoKr
+  swing/forget; per-step dropout gives smooth gradients and learns all modes jointly (CFG-style cond-dropout).
+  Example mix: **~50% text-only · ~30% text+FLF (first+last frame) · ~20% text+i2v (first frame)** — tune.
+- **Text caption is ALWAYS present** — it's "text" vs "text + image-anchors", never either/or. One caption path.
+- **FLF anchors = SHARP-hand endpoints.** Pick start+end frames with clear hands (DWPose `fingers_clear` +
+  Laplacian sharpness), else you anchor blur. (The segment/hand-filter pipeline already yields per-shot
+  clear-hand frames + timecodes, so start/end picks are free.)
+- **Scope honesty:** augments the CONDITIONING, not the visual content → **regularization + multi-mode
+  robustness, NOT new hand anatomy**. Complements collecting more real-hand clips, doesn't replace it.
+- **Finger goal:** neutral-to-positive — the finger fix lives in the shared **denoiser (cond-agnostic)**, so
+  mixing modes doesn't dilute it; FLF endpoints with correct hands add a prior that pinches mid-frame artifacts.
+- ⚠️ **Interpolation shortcut:** with FLF the model can just copy endpoints + do weak middle motion —
+  validate **motion** quality (not only endpoints); FLF is a prior, **not** a substitute for hand base-FT.
+
+---
+
 ## Eval (decide when to add data)
 - **Hands:** % of fast-motion frames with a correct 5-finger hand (auto: hand-keypoint detector + finger-count
   / anatomy heuristic). This is also the DPO reward signal.
@@ -168,6 +188,8 @@ LR: low (refinement risk of forgetting base video priors). PiSSA init + rsLoRA s
 3. **Verify ai-toolkit LoKr for LTX-2.3** — else fallback (high-rank DoRA+rsLoRA / full-FT) or hand-write LoKr.
 4. Build **MVP data ~600** → first warm-start pose LoRA + base LoKr → **eval on hand metric** → scale.
 5. Later: **DPO/reward pass** on finger-count win/lose pairs (strongest anatomy lever, semi-automatable).
+6. **Verify trainer supports per-sample conditioning-mode dropout + FLF (first+last) positions** in
+   ai-toolkit/LTX-trainer — else hand-write the mode sampler (text / i2v / FLF probabilities per step).
 
 ## ✅ Verification (deep-research, 2026-07-10, primary sources)
 
