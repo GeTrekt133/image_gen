@@ -40,6 +40,8 @@ same as any other creator running an adult page, just with an AI-generated model
 - `WORKFLOWS.md` — pose-control + edit, exact ControlNet models per base.
 - `NSFW_ZIMAGE.md` — NSFW on Z-Image (uncensored base + verified NSFW LoRAs + stacking with char-LoRA).
 - `PIPELINE_VIDEO.md` — **видео LTX-2.3: i2v + motion-control (dance transfer), баг ref0.5 downscale-link.**
+- `PIPELINE_MOTION.md` — **Wan2.2-Animate + SCAIL-2 motion transfer (2026-07-11): run_wanimate.py /
+  run_scail2.py, фон ref/video/image, blockify-эмуляция, SAM3-маски headless, все гочи.**
 - `PIPELINE_NSFW.md` — **рабочая NSFW-связка (2026-07-08): unStable Revolution чекпоинт + универсальный
   финиш (2K→skin-refine→FaceDetailer) + pose/depth-control + Qwen-Edit.** Точка входа для продолжения.
 - `TRAINING.md` — **план дообучения LTX-2.3 под dance+руки+персону: LoKr(+PiSSA+rsLoRA) для базы,

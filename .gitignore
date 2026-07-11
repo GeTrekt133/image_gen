@@ -15,3 +15,13 @@ hf_dl/
 # logs
 *.log
 __pycache__/
+# media / outputs / galleries — не коммитим (в т.ч. explicit)
+results/
+gallery/
+export/
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.webp
+HiDream-O1-Image/
