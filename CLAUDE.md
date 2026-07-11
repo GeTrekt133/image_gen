@@ -44,3 +44,5 @@ same as any other creator running an adult page, just with an AI-generated model
   финиш (2K→skin-refine→FaceDetailer) + pose/depth-control + Qwen-Edit.** Точка входа для продолжения.
 - `TRAINING.md` — **план дообучения LTX-2.3 под dance+руки+персону: LoKr(+PiSSA+rsLoRA) для базы,
   warm-start union для pose-IC-LoRA, сбор данных (fast-motion-blur = хороший сэмпл), ltx-trainer конфиги.**
+- `WF_HIDREAM_O1.md` — **HiDream-O1-Image-Dev-2604 headless T2I (8B Qwen3-VL-backbone, pixel-native, MIT,
+  топ open-source realism). Точные dev-параметры (28/CFG0/shift1, ставятся `--model_type dev`), setup/dl/batch-runner.**
