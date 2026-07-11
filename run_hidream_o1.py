@@ -28,8 +28,8 @@ def main():
     g.add_argument("--prompts", help="text file, one prompt per line")
     g.add_argument("--prompt", help="single prompt")
     ap.add_argument("--outdir", default="results")
-    ap.add_argument("--height", type=int, default=1024)   # native 2048; start 1024 for VRAM
-    ap.add_argument("--width", type=int, default=1024)
+    ap.add_argument("--height", type=int, default=2048)   # snapped to ~2048-class buckets anyway; sets aspect only
+    ap.add_argument("--width", type=int, default=2048)
     ap.add_argument("--seed", type=int, default=32)
     ap.add_argument("--vary_seed", action="store_true", help="seed = base_seed + index")
     ap.add_argument("--model_type", default="dev", choices=["dev", "full"])
@@ -51,6 +51,7 @@ def main():
     for i, p in enumerate(prompts):
         out = os.path.join(a.outdir, slug(p, i) + ".png")
         seed = a.seed + (i if a.vary_seed else 0)
+        env = {**os.environ, "FA_VERSION": os.environ.get("FA_VERSION", "auto")}  # dev branch hard-imports flash_attn otherwise
         cmd = [a.python, inf,
                "--model_path", a.model_path,
                "--prompt", p,
@@ -59,7 +60,7 @@ def main():
                "--height", str(a.height), "--width", str(a.width),
                "--seed", str(seed)]
         t = time.time()
-        r = subprocess.run(cmd)
+        r = subprocess.run(cmd, env=env)
         dt = time.time() - t
         good = r.returncode == 0 and os.path.exists(out)
         ok += good

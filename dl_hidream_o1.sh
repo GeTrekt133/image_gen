@@ -9,11 +9,12 @@ DL(){ "$PY" -m huggingface_hub download "$1" --local-dir "$2" ${HF_TOKEN:+--toke
 # fallback if the module entrypoint differs:
 command -v hf >/dev/null 2>&1 && DL(){ hf download "$1" --local-dir "$2"; }
 
-# the checkpoint we use (distilled, 28-step, model_type=dev)
+# distilled 2604 (28-step, CFG off, ~40s/img) — fast drafts; noticeably softer
+# microtexture (skin/hair) than full — pod A/B 2026-07-11
 DL HiDream-ai/HiDream-O1-Image-Dev-2604 models/hidream-o1-dev-2604
 
-# optional — full model (50-step, higher quality, slower):
-# DL HiDream-ai/HiDream-O1-Image models/hidream-o1-full
+# full model (50-step, CFG 5, ~65s/img) — THE photo-quality checkpoint, use for finals
+DL HiDream-ai/HiDream-O1-Image models/hidream-o1-full
 # optional — prompt refiner (heavy Gemma-4-31B; skip unless needed):
 # DL HiDream-ai/Prompt-Refine models/prompt-refine
 
