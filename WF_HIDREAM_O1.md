@@ -52,11 +52,15 @@ python run_hidream_o1.py --model_path models/hidream-o1-dev-2604 \
     --prompts prompts.txt --outdir results/ --height 1024 --width 1024
 ```
 
-## VRAM (not stated by repo — empirical)
-8B Qwen3-VL bf16 ≈ ~16 GB weights; **pixel-native at 2048² is a huge token seq → activation-heavy**.
-- **Start at 1024×1024** to gauge memory/speed, then push to 1536/2048 if the card allows.
-- Comfortable on **80 GB+** (A100-80 / RTX 6000 96GB). On smaller cards stay ≤1024 (or use the community
-  fp8/GGUF path below).
+## VRAM (from the actual repo files — pick the pod by THIS)
+Dev-2604 is a **full checkpoint: 8 bf16 shards ≈ 35 GB weights** (bigger than the "8B" headline — likely
+counts the full multi-tower + vision). So:
+- **Weights alone need ~35 GB** → a 24 GB card CANNOT load it in bf16.
+- **pixel-native at 2048² adds a huge activation seq** on top → budget well above the 35 GB.
+- **Rent 80 GB+** (A100-80 / H100-80 / **RTX 6000 96GB**) for comfort at 1024→2048.
+  **48 GB (A6000/L40S)** may load + run **1024** but is tight — start there and watch OOM.
+- **<48 GB:** don't use this bf16 checkpoint — use the community **fp8/GGUF** path (§ below).
+- **Always start 1024×1024**, push to 1536/2048 only if headroom.
 
 ## Prompt refiner (optional — off by default)
 `prompt_agent.py` rewrites a terse instruction into a dense prompt via **Gemma-4-31B-it** (local, heavy) or
@@ -79,5 +83,7 @@ Official repo has no fp8/GGUF/ComfyUI. Community: `Comfy-Org/HiDream-O1-Image` r
   the correct `--model_type dev` flags (⚠️ reloads the 8B model per prompt — fine for small batches; an
   in-process batch loop is a pod-side optimization once we read `models/pipeline.py` load path).
 
-**Verify on pod (can't test here):** actual VRAM at 1024 vs 2048; that Dev-2604 downloads as full weights
-(not a LoRA needing base merge); flash-attn build on the pod's CUDA.
+**Confirmed remotely:** Dev-2604 = full checkpoint (8 bf16 shards, ~35 GB, config.json + Qwen3VL processor),
+no LoRA/merge. argparse flags used by `run_hidream_o1.py` all exist in `inference.py`.
+**Still verify on the pod (can't test here):** real VRAM/OOM at 1024 vs 2048; flash-attn build on the pod's
+CUDA (else auto-patch); torch>=2.10 / transformers==4.57.1 vs the pod's base image.
