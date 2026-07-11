@@ -153,10 +153,13 @@ def run(graph, port):
             print(f"  ... running {time.time()-t0:.0f}s", flush=True); continue
         st = h[pid]["status"]
         if st.get("completed"):
+            paths = []
             for o in h[pid]["outputs"].values():
                 for v in o.get("images", []) + o.get("video", []):
-                    print("OUTPUT:", f"/workspace/ComfyUI/output/{v.get('subfolder','')}/{v['filename']}")
-            print(f"DONE in {time.time()-t0:.0f}s"); return
+                    p = f"/workspace/ComfyUI/output/{v.get('subfolder','')}/{v['filename']}"
+                    paths.append(p); print("OUTPUT:", p)
+            print(f"DONE in {time.time()-t0:.0f}s")
+            return paths[0] if paths else None
         if st.get("status_str") == "error":
             for m in st.get("messages", []):
                 if m[0] == "execution_error":
@@ -187,10 +190,17 @@ if __name__ == "__main__":
     p.add_argument("--bg-hole", choices=["on", "off"], default="off",
                    help="off = полный фон + character_mask (без ореола); on = зачернять зону персоны")
     p.add_argument("--port", type=int, default=10100)
+    p.add_argument("--out", default="", help="скопировать результат в этот путь (абсолютный или относительный)")
     p.add_argument("--dump", action="store_true", help="только напечатать граф")
     a = p.parse_args()
     graph = build(a)
     if a.dump:
         print(json.dumps(graph, indent=1, ensure_ascii=False))
     else:
-        run(graph, a.port)
+        result = run(graph, a.port)
+        if a.out and result:
+            import os, shutil
+            dst = os.path.abspath(os.path.expanduser(a.out))
+            os.makedirs(os.path.dirname(dst) or ".", exist_ok=True)
+            shutil.copy(result, dst)
+            print("SAVED:", dst)
